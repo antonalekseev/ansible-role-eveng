@@ -1,0 +1,18 @@
+-c main.txt
+ansible-lint
+autoflake
+black
+pyls-mypy
+pyls-black
+epc
+flake8
+future
+importmagic
+isort
+jedi==0.14.1
+pipdeptree
+pylint
+pyls-isort
+pytest
+python-language-server[pycodestyle,pydocstyle,pyflakes,pylint,rope]==0.26.1
+rope

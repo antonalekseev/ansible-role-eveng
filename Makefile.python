@@ -1,0 +1,26 @@
+python_version = 3.8.0
+
+update-deps:
+	pip install -U pip setuptools wheel pip-tools
+	pip-compile --upgrade --output-file requirements/main.txt requirements/main.in
+	pip-compile --upgrade --output-file requirements/dev.txt requirements/dev.in
+
+sync:
+	pip-sync requirements/main.txt requirements/dev.txt
+
+update: update-deps sync
+
+install-editable:
+	pip install --editable .
+
+remove-venv:
+	rm -rf .direnv/python-$(python_version) \
+		&& sed -i '' -e '/layout pyenv $(python_version)/d' .envrc
+	direnv allow
+
+create-venv:
+	grep -q layout .envrc || \
+		echo layout pyenv $(python_version) >> .envrc
+	direnv allow
+
+.PHONY: create-venv install-editable remove-venv sync update update-deps

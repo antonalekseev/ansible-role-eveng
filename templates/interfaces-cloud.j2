@@ -1,0 +1,7 @@
+{% for n in range(2, 10) %}
+iface eth{{ n }} inet manual
+auto pnet{{ n }}
+iface pnet{{ n }} inet manual
+    bridge_ports eth{{ n }}
+    bridge_stp off
+{% endfor %}

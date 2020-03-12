@@ -1,0 +1,203 @@
+---
+
+- fail:
+    msg: "Unsupported OS family {{ ansible_os_family }}"
+  when: ansible_os_family not in ansible_eveng_supported_os_families
+
+- name: Include provider specific variables
+  include_vars: "{{ ansible_eveng_provider }}.yml"
+
+- name: Wait for the host to be available
+  wait_for_connection:
+
+- name: Gather facts
+  setup:
+
+- name: Update all packages
+  apt:
+    name: "*"
+    state: latest  # noqa 403
+    update_cache: yes
+    force_apt_get: yes
+
+- name: Set Python3 as the default one
+  alternatives:
+    name: python
+    link: /usr/bin/python
+    path: /usr/bin/python3.5
+    priority: 10
+
+- name: Reset SSH connection
+  meta: reset_connection
+
+- name: Add EVE-NG apt key
+  apt_key:
+    url: "{{ ansible_eveng_apt_key_url }}"
+    state: present
+
+- name: Add EVE-NG repository
+  apt_repository:
+    repo: "{{ ansible_eveng_apt_repository }}"
+
+- name: Install EVE-NG prerequisites
+  apt:
+    name: "{{ item }}"
+    state: latest  # noqa 403
+    update_cache: yes
+    force_apt_get: yes
+  loop:
+    - software-properties-common
+    - python-openssl
+
+# For whatever reason eve-ng (community) fails on eve-ng-guacamole, but on
+# the second try it installs, so for a while we just keep retrying.
+# (dists/xenial/Release Date: Thu, 20 Feb 2020 11:31:39 UTC)
+- name: Install EVE-NG
+  apt:
+    name: eve-ng
+    state: latest  # noqa 403
+    update_cache: yes
+    force_apt_get: yes
+  register: eve_installed
+  retries: 3
+  delay: 10
+  until: eve_installed is not failed
+  notify: Restart MySQL
+
+- name: Move /etc/rc.local to /etc/eve-setup.sh
+  command: mv /etc/rc.local /etc/eve-setup.sh
+  args:
+    creates: /etc/eve-setup.sh
+
+- name: Update GRUB config
+  lineinfile:
+    path: /etc/default/grub
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: 'GRUB_CMDLINE_LINUX_DEFAULT=.*'
+      line: 'GRUB_CMDLINE_LINUX_DEFAULT=""'
+    - regexp: 'GRUB_CMDLINE_LINUX=.*'
+      line: "{{ ansible_eveng_grub_cmdline_linux }}"
+  notify: Update GRUB
+
+- name: Finish configuration
+  file:
+    path: /opt/ovf/.configured
+    state: touch
+    modification_time: preserve
+    access_time: preserve
+  register: configured
+
+- name: Enable apache2 SSL module
+  apache2_module:
+    name: ssl
+    state: present
+  tags: tls
+
+- name: Enable apache2 rewrite module
+  apache2_module:
+    name: rewrite
+    state: present
+  tags: tls
+
+- name: Ensure SSL directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - /etc/ssl/private
+    - /etc/ssl/certs
+  tags: tls
+
+- name: Copy SSL certificate
+  copy:
+    src: "{{ ansible_eveng_ssl_cert }}"
+    dest: "/etc/ssl/certs/apache-cert.pem"
+  tags: tls
+
+- name: Copy SSL key
+  copy:
+    src: "{{ ansible_eveng_ssl_key }}"
+    dest: "/etc/ssl/private/apache-key.pem"
+  tags: tls
+
+- name: Create Apache SSL virtual server
+  template:
+    src: etc/apache2/sites-enabled/default-ssl.conf
+    dest: /etc/apache2/sites-enabled/default-ssl.conf
+  tags: tls
+  notify: Restart Apache
+
+- name: Enable redirect to HTTPS
+  blockinfile:
+    dest: /etc/apache2/sites-enabled/unetlab.conf
+    block: |
+      RewriteEngine On
+      RewriteCond %{HTTPS} !=on
+      RewriteRule ^/?(.*) https://%{SERVER_NAME}/$1 [R,L]
+    insertbefore: "<Location /html5/>"
+  tags: tls
+  notify: Restart Apache
+
+- name: Check Apache2 config
+  command: /usr/sbin/apachectl configtest
+  changed_when: false
+  tags: tls
+
+- name: Check if web UI admin password is already set
+  command: "{{ ansible_eveng_mysql_command }} -e \"select username from users where password=sha2('{{ ansible_eveng_admin_password }}', 256)\""
+  changed_when: false
+  register: eveng_admin
+  tags: password
+
+- name: Change default web UI admin password if needed
+  command: "{{ ansible_eveng_mysql_command }} -N -e \"update users set password=sha2('{{ ansible_eveng_admin_password }}', 256) where username='admin'\""
+  when: eveng_admin.stdout != "admin"
+  tags: password
+
+- name: Rename interafaces
+  replace:
+    path: /etc/network/interfaces
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - { regexp: "enp0s20f0", replace: "eth0" }
+    - { regexp: "enp0s20f1", replace: "eth1" }
+    - { regexp: "p1p1", replace: "eth0" }
+    - { regexp: "p1p2", replace: "eth1" }
+    - { regexp: "bond0", replace: "pnet0" }
+  notify: Reboot system
+
+- name: Generate cloud interfaces config
+  blockinfile:
+    dest: /etc/network/interfaces
+    block: "{{ lookup('template', 'interfaces-cloud.j2') }}"
+    marker: "# {mark} CLOUD INTERFACES"
+  notify: Reboot system
+
+- name: Check if /etc/network/interfaces is valid
+  command: ifup --no-act pnet0
+  changed_when: false
+
+- name: Create images download directory
+  file:
+    path: /eveng-images/
+    state: directory
+  tags: images
+
+- name: Download images
+  get_url:
+    url: "{{ item }}"
+    dest: "/eveng-images/{{ item | basename }}"
+  loop: "{{ ansible_eveng_image_urls }}"
+  tags: images
+
+- name: Unarchive images
+  unarchive:
+    src: "/eveng-images/{{ item | basename }}"
+    dest: /opt/unetlab/addons/qemu/
+    remote_src: yes
+  loop: "{{ ansible_eveng_image_urls }}"
+  notify: Fix EVE-NG permissions
+  tags: images

@@ -1,0 +1,18 @@
+---
+
+ansible_eveng_provider: packet
+
+ansible_eveng_apt_key_url: http://www.eve-ng.net/repo/eczema@ecze.com.gpg.key
+ansible_eveng_apt_repository: deb [arch=amd64] http://www.eve-ng.net/repo xenial main
+
+ansible_eveng_mysql_host: localhost
+ansible_eveng_mysql_user: root
+ansible_eveng_mysql_password: eve-ng
+ansible_eveng_mysql_db: eve_ng_db
+
+ansible_eveng_admin_password: eve
+
+ansible_eveng_ssl_cert: "{{ inventory_hostname }}-cert.pem"
+ansible_eveng_ssl_key: "{{ inventory_hostname }}-key.pem"
+
+ansible_eveng_image_urls: []

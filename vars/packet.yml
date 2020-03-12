@@ -1,0 +1,3 @@
+---
+
+ansible_eveng_grub_cmdline_linux: 'GRUB_CMDLINE_LINUX="console=tty0 console=ttyS1,115200n8 biosdevname=0 net.ifnames=0"'

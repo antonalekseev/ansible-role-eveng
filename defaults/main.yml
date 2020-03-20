@@ -5,6 +5,9 @@ ansible_eveng_provider: packet
 ansible_eveng_apt_key_url: http://www.eve-ng.net/repo/eczema@ecze.com.gpg.key
 ansible_eveng_apt_repository: deb [arch=amd64] http://www.eve-ng.net/repo xenial main
 
+# set to "eve-ng-pro" for the pro version
+ansible_eveng_package: eve-ng
+
 ansible_eveng_mysql_host: localhost
 ansible_eveng_mysql_user: root
 ansible_eveng_mysql_password: eve-ng

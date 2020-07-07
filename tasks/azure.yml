@@ -1,0 +1,26 @@
+---
+
+# based on http://www.eve-ng.net/repo/install-eve.sh
+
+- name: Set qemu-system-x86 options
+  lineinfile:
+    path: /etc/modprobe.d/qemu-system-x86.conf
+    state: present
+    regexp: '^options'
+    line: 'options kvm_intel nested=1 vmentry_l1d_flush=never'
+
+- name: Install EVE-NG-specific Azure kernel
+  apt:
+    name: "{{ ansible_eveng_linux_kernel_package }}" 
+    state: latest  # noqa 403
+    update_cache: yes
+    force_apt_get: yes
+  notify: Reboot system
+
+- name: Set new kernel as default in GRUB
+  lineinfile:
+    path: /etc/default/grub
+    regexp: 'GRUB_DEFAULT=.*'
+    line: 'GRUB_DEFAULT="{{ ansible_eveng_grub_menu_item }}"'
+  notify: Update GRUB
+

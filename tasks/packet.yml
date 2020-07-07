@@ -1,0 +1,37 @@
+---
+
+- name: Update GRUB config
+  lineinfile:
+    path: /etc/default/grub
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: 'GRUB_CMDLINE_LINUX_DEFAULT=.*'
+      line: 'GRUB_CMDLINE_LINUX_DEFAULT=""'
+    - regexp: 'GRUB_CMDLINE_LINUX=.*'
+      line: "{{ ansible_eveng_grub_cmdline_linux }}"
+  notify: Update GRUB
+
+- name: Rename network interfaces
+  replace:
+    path: /etc/network/interfaces
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - { regexp: "enp0s20f0", replace: "eth0" }
+    - { regexp: "enp0s20f1", replace: "eth1" }
+    - { regexp: "p1p1", replace: "eth0" }
+    - { regexp: "p1p2", replace: "eth1" }
+    - { regexp: "bond0", replace: "pnet0" }
+  notify: Reboot system
+
+- name: Generate cloud interfaces config
+  blockinfile:
+    dest: /etc/network/interfaces
+    block: "{{ lookup('template', 'interfaces-cloud.j2') }}"
+    marker: "# {mark} CLOUD INTERFACES"
+  notify: Reboot system
+
+- name: Check if /etc/network/interfaces is valid
+  command: ifup --no-act pnet0
+  changed_when: false

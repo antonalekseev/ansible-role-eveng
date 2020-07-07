@@ -24,3 +24,13 @@
     line: 'GRUB_DEFAULT="{{ ansible_eveng_grub_menu_item }}"'
   notify: Update GRUB
 
+- name: Configure network interfaces
+  template:
+    dest: /etc/network/interfaces
+    src: etc/network/interfaces-azure
+    backup: yes
+  notify: Reboot system
+
+- name: Check if /etc/network/interfaces is valid
+  command: ifup --no-act pnet1
+  changed_when: false

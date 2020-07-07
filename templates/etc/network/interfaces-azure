@@ -1,0 +1,16 @@
+# loopback
+auto lo
+iface lo inet loopback
+
+# primary
+auto eth0
+iface eth0 inet dhcp
+
+# secondary
+auto eth1
+iface eth1 inet manual
+
+auto pnet1
+iface pnet1 inet dhcp
+	bridge_ports eth1
+	bridge_stp off

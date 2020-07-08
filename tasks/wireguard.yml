@@ -87,6 +87,7 @@
     creates: /tmp/wireguard-tools-build/{{ ( ( ansible_eveng_wg_tools_src_url | basename | splitext )[0] | splitext )[0] }}/wg
   environment:
     PATH: "{{ lookup('env', 'PATH') }}:/usr/local/go/bin"
+    WITH_SYSTEMDUNITS: "yes"
   tags: wireguard
 
 - name: Install wireguard-tools
@@ -96,6 +97,7 @@
     creates: /usr/bin/wg
   environment:
     PATH: "{{ lookup('env', 'PATH') }}:/usr/local/go/bin"
+    WITH_SYSTEMDUNITS: "yes"
   tags: wireguard
 
 - name: Clean up wireguard-tools build dir
@@ -211,6 +213,7 @@
   template: 
     src: wg-server.j2
     dest: /etc/wireguard/wg0.conf
+  notify: Restart WireGuard
   tags: wireguard
 
 - name: Create client config
@@ -237,3 +240,11 @@
     state: present
     reload: yes
   tags: wireguard
+
+- name: Autostart WireGuard with systemd
+  systemd:
+    name: wg-quick@wg0
+    state: started
+    enabled: yes
+  tags: wireguard
+

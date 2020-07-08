@@ -5,6 +5,10 @@ ansible_eveng_provider: packet
 ansible_eveng_apt_key_url: http://www.eve-ng.net/repo/eczema@ecze.com.gpg.key
 ansible_eveng_apt_repository: deb [arch=amd64] http://www.eve-ng.net/repo xenial main
 
+ansible_eveng_golang_bin_pkg_url: https://golang.org/dl/go1.14.4.linux-amd64.tar.gz
+ansible_eveng_wg_src_url: https://git.zx2c4.com/wireguard-go/snapshot/wireguard-go-0.0.20200320.tar.xz
+ansible_eveng_wg_tools_src_url: https://git.zx2c4.com/wireguard-tools/snapshot/wireguard-tools-1.0.20200513.tar.xz
+
 # set to "eve-ng-pro" for the pro version
 ansible_eveng_package: eve-ng
 
@@ -19,3 +23,10 @@ ansible_eveng_ssl_cert: "{{ inventory_hostname }}-cert.pem"
 ansible_eveng_ssl_key: "{{ inventory_hostname }}-key.pem"
 
 ansible_eveng_image_urls: []
+
+ansible_eveng_mgmt_netaddr_v4:
+ansible_eveng_wg_server_ifaddr_v4:
+ansible_eveng_wg_server_port:
+ansible_eveng_wg_client_ifaddr_v4:
+ansible_eveng_wg_client_port:
+ansible_eveng_wg_server_endpoint: "{{ inventory_hostname }}:{{ ansible_eveng_wg_server_port}}"

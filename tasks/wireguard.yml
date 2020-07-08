@@ -1,0 +1,239 @@
+---
+
+- name: Download and extract Go binary package
+  unarchive:
+    src: "{{ ansible_eveng_golang_bin_pkg_url }}"
+    dest: /usr/local
+    remote_src: yes
+    creates: /usr/local/go/bin/go
+  tags: wireguard
+
+- name: Add Go binary to the PATH
+  lineinfile:
+    path: /etc/profile
+    insertafter: EOF
+    line: "export PATH=$PATH:/usr/local/go/bin"
+  tags: wireguard
+
+- name: Reset SSH connection
+  meta: reset_connection
+  tags: wireguard
+
+- name: Ensure there is no wireguard-go build dir exists
+  file:
+    path: /tmp/wireguard-go-build
+    state: absent
+  tags: wireguard
+
+- name: Create fresh wireguard-go build dir
+  file:
+    path: /tmp/wireguard-go-build
+    state: directory
+  tags: wireguard
+
+- name: Download and extract wireguard-go source package
+  unarchive:
+    src: "{{ ansible_eveng_wg_src_url }}"
+    dest: /tmp/wireguard-go-build
+    remote_src: yes
+  tags: wireguard
+
+- name: Build wireguard-go from source
+  command:
+    cmd: make all
+    chdir: /tmp/wireguard-go-build/{{ ( ( ansible_eveng_wg_src_url | basename | splitext )[0] | splitext )[0] }}
+    creates: /tmp/wireguard-go-build/{{ ( ( ansible_eveng_wg_src_url | basename | splitext )[0] | splitext )[0] }}/wireguard-go
+  environment:
+    PATH: "{{ lookup('env', 'PATH') }}:/usr/local/go/bin"
+  tags: wireguard
+
+- name: Install wireguard to /usr/sbin
+  copy:
+    src: /tmp/wireguard-go-build/{{ ( ( ansible_eveng_wg_src_url | basename | splitext )[0] | splitext )[0] }}/wireguard-go
+    dest: /usr/sbin/wireguard-go
+    mode: preserve
+    remote_src: yes
+  tags: wireguard
+
+- name: Clean up wireguard-go build dir
+  file:
+    path: /tmp/wireguard-go-build
+    state: absent
+  tags: wireguard
+
+- name: Ensure there is no wireguard-tools build dir exists
+  file:
+    path: /tmp/wireguard-tools-build
+    state: absent
+  tags: wireguard
+
+- name: Create fresh wireguard-tools build dir
+  file:
+    path: /tmp/wireguard-tools-build
+    state: directory
+  tags: wireguard
+
+- name: Download and extract wireguard-tools source package
+  unarchive:
+    src: "{{ ansible_eveng_wg_tools_src_url }}"
+    dest: /tmp/wireguard-tools-build
+    remote_src: yes
+  tags: wireguard
+
+- name: Build wireguard-tools from source
+  command:
+    cmd: make all
+    chdir: /tmp/wireguard-tools-build/{{ ( ( ansible_eveng_wg_tools_src_url | basename | splitext )[0] | splitext )[0] }}/src
+    creates: /tmp/wireguard-tools-build/{{ ( ( ansible_eveng_wg_tools_src_url | basename | splitext )[0] | splitext )[0] }}/wg
+  environment:
+    PATH: "{{ lookup('env', 'PATH') }}:/usr/local/go/bin"
+  tags: wireguard
+
+- name: Install wireguard-tools
+  command:
+    cmd: make install
+    chdir: /tmp/wireguard-tools-build/{{ ( ( ansible_eveng_wg_tools_src_url | basename | splitext )[0] | splitext )[0] }}/src
+    creates: /usr/bin/wg
+  environment:
+    PATH: "{{ lookup('env', 'PATH') }}:/usr/local/go/bin"
+  tags: wireguard
+
+- name: Clean up wireguard-tools build dir
+  file:
+    path: /tmp/wireguard-tools-build
+    state: absent
+  tags: wireguard
+
+- name: Check if server key exists
+  stat:
+    path: "{{ playbook_dir }}/../keys/wg-server-key"
+  delegate_to: localhost
+  register: server_key_stat
+  tags: wireguard
+
+- block:
+  - name: Generate server private key
+    command:
+      cmd: wg genkey
+    register: server_key
+    tags: wireguard
+
+  - name: Generate server public key
+    shell: echo "{{ server_key.stdout }}" | wg pubkey
+    args:
+      warn: no
+    register: server_pubkey
+    tags: wireguard
+
+  - name: Store server private key
+    copy:
+      content: "{{ server_key.stdout }}"
+      dest: "{{ playbook_dir }}/../keys/wg-server-key"
+    delegate_to: localhost
+    tags: wireguard
+
+  - name: Store server public key
+    copy:
+      content: "{{ server_pubkey.stdout }}"
+      dest: "{{ playbook_dir }}/../keys/wg-server-pubkey"
+    delegate_to: localhost
+    tags: wireguard
+
+  - set_fact:
+      server_key_val: "{{ server_key.stdout }}"
+      server_pubkey_val: "{{ server_pubkey.stdout }}"
+    tags: wireguard
+  when: not server_key_stat.stat.exists
+
+- block:
+  - set_fact:
+      server_key_val: "{{ lookup('file',  '../keys/wg-server-key') }}"
+      server_pubkey_val: "{{ lookup('file',  '../keys/wg-server-pubkey') }}"
+    tags: wireguard
+  when: server_key_stat.stat.exists
+
+
+- name: Check if client key exists
+  stat:
+    path: "{{ playbook_dir }}/../keys/wg-client-key"
+  delegate_to: localhost
+  register: client_key_stat
+  tags: wireguard
+
+- block:
+  - name: Generate client private key
+    command:
+      cmd: wg genkey
+    register: client_key
+    tags: wireguard
+
+  - name: Generate client public key
+    shell: echo "{{ client_key.stdout }}" | wg pubkey
+    args:
+      warn: no
+    register: client_pubkey
+    tags: wireguard
+
+  - name: Store client private key
+    copy:
+      content: "{{ client_key.stdout }}"
+      dest: "{{ playbook_dir }}/../keys/wg-client-key"
+    delegate_to: localhost
+    tags: wireguard
+
+  - name: Store client public key
+    copy:
+      content: "{{ client_pubkey.stdout }}"
+      dest: "{{ playbook_dir }}/../keys/wg-client-pubkey"
+    delegate_to: localhost
+    tags: wireguard
+
+  - set_fact:
+      client_key_val: "{{ client_key.stdout }}"
+      client_pubkey_val: "{{ client_pubkey.stdout }}"
+    tags: wireguard
+  when: not client_key_stat.stat.exists
+
+- block:
+  - set_fact:
+      client_key_val: "{{ lookup('file',  '../keys/wg-client-key') }}"
+      client_pubkey_val: "{{ lookup('file',  '../keys/wg-client-pubkey') }}"
+    tags: wireguard
+  when: client_key_stat.stat.exists
+
+- name: Ensure that wireguard config dir exists
+  file:
+    path: /etc/wireguard
+    state: directory
+  tags: wireguard
+
+- name: Create server config
+  template: 
+    src: wg-server.j2
+    dest: /etc/wireguard/wg0.conf
+  tags: wireguard
+
+- name: Create client config
+  template: 
+    src: wg-client.j2
+    dest: files/wg-client.conf
+  delegate_to: localhost
+  tags: wireguard
+
+- name: Enable IPv4 forwarding
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    sysctl_set: yes
+    state: present
+    reload: yes
+  tags: wireguard
+
+- name: Enable proxy ARP on EVE-NG bridge inteface
+  sysctl:
+    name: net.ipv4.conf.all.proxy_arp
+    value: '1'
+    sysctl_set: yes
+    state: present
+    reload: yes
+  tags: wireguard

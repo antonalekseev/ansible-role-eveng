@@ -146,6 +146,9 @@
 
 - include_tasks: '{{ ansible_eveng_provider }}.yml'
 
+- include_tasks: 'wireguard.yml'
+  tags: wireguard
+
 - name: Create images download directory
   file:
     path: /eveng-images/

@@ -103,12 +103,14 @@
     src: "{{ ansible_eveng_ssl_cert }}"
     dest: "/etc/ssl/certs/apache-cert.pem"
   tags: tls
+  notify: Restart Apache
 
 - name: Copy SSL key
   copy:
     src: "{{ ansible_eveng_ssl_key }}"
     dest: "/etc/ssl/private/apache-key.pem"
   tags: tls
+  notify: Restart Apache
 
 - name: Create Apache SSL virtual server
   template:

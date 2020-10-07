@@ -1,0 +1,31 @@
+network:
+    renderer: networkd
+    version: 2
+    ethernets:
+        eth0:
+            dhcp4: true
+            dhcp4-overrides:
+                route-metric: 100
+            dhcp6: false
+            match:
+                driver: hv_netvsc
+                macaddress: "{{ ansible_eth0['macaddress'] }}"
+            set-name: eth0
+        eth1:
+            dhcp4: false
+            dhcp6: false
+            match:
+                driver: hv_netvsc
+                macaddress: "{{ ansible_eth1['macaddress'] }}"
+            set-name: eth1
+    bridges:
+        br1:
+            interfaces: [eth1]
+            macaddress: "{{ ansible_eth1['macaddress'] }}"
+            dhcp4: true
+            dhcp4-overrides:
+                route-metric: 200
+            dhcp6: false
+            parameters:
+                forward-delay: 0
+                stp: false

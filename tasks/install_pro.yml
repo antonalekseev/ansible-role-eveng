@@ -1,0 +1,43 @@
+---
+
+- name: Install software-properties-common
+  apt:
+    name: software-properties-common
+    state: latest  # noqa 403
+    update_cache: yes
+
+- name: Install Docker
+  apt:
+    name: docker-ce
+    state: latest  # noqa 403
+    update_cache: yes
+
+- name: Install EVE-NG step 1
+  apt:
+    name: eve-ng-pro
+    state: latest  # noqa 403
+  notify: Restart MySQL
+  ignore_errors: yes
+
+- name: Install EVE-NG step 2
+  apt:
+    name: eve-ng-pro
+    state: latest  # noqa 403
+  ignore_errors: yes
+
+- name: Remove aufs directory
+  file:
+    name: /var/lib/docker/aufs
+    state: absent
+    force: yes
+
+- name: Install EVE-NG step 3
+  apt:
+    name: eve-ng-pro
+    state: latest  # noqa 403
+
+- name: Place EVE-NG license file
+  copy:
+    dest: /opt/unetlab/html/eve-ng.lic
+    content: "{{ ansible_eveng_license }}"
+

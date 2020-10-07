@@ -1,0 +1,31 @@
+---
+
+- name: Install EVE-NG prerequisites
+  apt:
+    name: "{{ item }}"
+    state: latest  # noqa 403
+    update_cache: yes
+    force_apt_get: yes
+  loop:
+    - software-properties-common
+    - python-openssl
+
+# For whatever reason eve-ng (community) fails on eve-ng-guacamole, but on
+# the second try it installs, so for a while we just keep retrying.
+# (dists/xenial/Release Date: Thu, 20 Feb 2020 11:31:39 UTC)
+- name: Install EVE-NG
+  apt:
+    name: "{{ ansible_eveng_package }}" 
+    state: latest  # noqa 403
+    update_cache: yes
+    force_apt_get: yes
+  register: eve_installed
+  retries: 3
+  delay: 10
+  until: eve_installed is not failed
+  notify: Restart MySQL
+
+- name: Move /etc/rc.local to /etc/eve-setup.sh
+  command: mv /etc/rc.local /etc/eve-setup.sh
+  args:
+    creates: /etc/eve-setup.sh

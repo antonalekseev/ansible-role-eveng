@@ -3,4 +3,4 @@
 # https://help.ubuntu.com/community/Grub2/Submenus
 ansible_eveng_grub_menu_item: '1>Ubuntu, with Linux 4.20.17-eve-ng-azure+'
 
-ansible_eveng_linux_kernel_package: "linux-image-4.20.17-eve-ng-azure+" 
+ansible_eveng_azure_kernel_package: "linux-image-4.20.17-eve-ng-azure+" 

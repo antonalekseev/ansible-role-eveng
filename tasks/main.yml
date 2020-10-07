@@ -6,6 +6,9 @@
 
 - name: Include provider specific variables
   include_vars: "{{ ansible_eveng_provider }}.yml"
+  
+- name: Include variables specific to EVE-NG edition
+  include_vars: "{{ ansible_eveng_edition }}.yml"
 
 - name: Wait for the host to be available
   wait_for_connection:
@@ -24,7 +27,7 @@
   alternatives:
     name: python
     link: /usr/bin/python
-    path: /usr/bin/python3.5
+    path: /usr/bin/python3
     priority: 10
 
 - name: Reset SSH connection
@@ -38,44 +41,24 @@
 - name: Add EVE-NG repository
   apt_repository:
     repo: "{{ ansible_eveng_apt_repository }}"
+    state: present
 
-- name: Install EVE-NG prerequisites
-  apt:
-    name: "{{ item }}"
-    state: latest  # noqa 403
-    update_cache: yes
-    force_apt_get: yes
-  loop:
-    - software-properties-common
-    - python-openssl
+- include_tasks: 'install_{{ ansible_eveng_edition }}.yml'
 
-# For whatever reason eve-ng (community) fails on eve-ng-guacamole, but on
-# the second try it installs, so for a while we just keep retrying.
-# (dists/xenial/Release Date: Thu, 20 Feb 2020 11:31:39 UTC)
-- name: Install EVE-NG
-  apt:
-    name: "{{ ansible_eveng_package }}" 
-    state: latest  # noqa 403
-    update_cache: yes
-    force_apt_get: yes
-  register: eve_installed
-  retries: 3
-  delay: 10
-  until: eve_installed is not failed
-  notify: Restart MySQL
+- name: Set hostname in /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    regexp: '^127\.0\.0\.1'
+    line: '127.0.0.1 {{ inventory_hostname }}' 
+    insertbefore: BOF
+    firstmatch: yes
+  tags: hostname
 
-- name: Move /etc/rc.local to /etc/eve-setup.sh
-  command: mv /etc/rc.local /etc/eve-setup.sh
-  args:
-    creates: /etc/eve-setup.sh
-
-- name: Finish configuration
-  file:
-    path: /opt/ovf/.configured
-    state: touch
-    modification_time: preserve
-    access_time: preserve
-  register: configured
+- name: Set hostname in /etc/hostname
+  copy:
+    content: '{{ inventory_hostname }}'
+    dest: /etc/hostname
+  tags: hostname
 
 - name: Enable apache2 SSL module
   apache2_module:
@@ -112,23 +95,8 @@
   tags: tls
   notify: Restart Apache
 
-- name: Create Apache SSL virtual server
-  template:
-    src: etc/apache2/sites-enabled/default-ssl.conf
-    dest: /etc/apache2/sites-enabled/default-ssl.conf
+- include_tasks: 'tls_{{ ansible_eveng_edition }}.yml'
   tags: tls
-  notify: Restart Apache
-
-- name: Enable redirect to HTTPS
-  blockinfile:
-    dest: /etc/apache2/sites-enabled/unetlab.conf
-    block: |
-      RewriteEngine On
-      RewriteCond %{HTTPS} !=on
-      RewriteRule ^/?(.*) https://%{SERVER_NAME}/$1 [R,L]
-    insertbefore: "<Location /html5/>"
-  tags: tls
-  notify: Restart Apache
 
 - name: Check Apache2 config
   command: /usr/sbin/apachectl configtest
@@ -147,6 +115,28 @@
   tags: password
 
 - include_tasks: '{{ ansible_eveng_provider }}.yml'
+  tags: interfaces
+
+- name: Finish configuration
+  file:
+    path: /opt/ovf/.configured
+    state: touch
+    modification_time: preserve
+    access_time: preserve
+  register: configured
+
+- name: Run pending handlers now
+  meta: flush_handlers
+
+- name: Wait for the host to become available
+  wait_for_connection:
+
+- name: Wait for license data to propagate
+  command: /opt/unetlab/wrappers/unl_wrapper -a platform
+  register: unl_wrapper
+  retries: 10
+  delay: 30
+  until: unl_wrapper.rc == 0
 
 - include_tasks: 'wireguard.yml'
   tags: wireguard

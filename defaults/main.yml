@@ -8,9 +8,6 @@ ansible_eveng_golang_bin_pkg_url: https://golang.org/dl/go1.14.4.linux-amd64.tar
 ansible_eveng_wg_src_url: https://git.zx2c4.com/wireguard-go/snapshot/wireguard-go-0.0.20200320.tar.xz
 ansible_eveng_wg_tools_src_url: https://git.zx2c4.com/wireguard-tools/snapshot/wireguard-tools-1.0.20200513.tar.xz
 
-# set to "eve-ng-pro" for the pro version
-ansible_eveng_package: eve-ng
-
 ansible_eveng_mysql_host: localhost
 ansible_eveng_mysql_user: root
 ansible_eveng_mysql_password: eve-ng

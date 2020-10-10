@@ -18,6 +18,8 @@ ansible_eveng_mysql_password: eve-ng
 ansible_eveng_mysql_db: eve_ng_db
 
 ansible_eveng_admin_password: eve
+ansible_eveng_api_username: api
+ansible_eveng_api_password: eveapi
 
 ansible_eveng_ssl_cert: "{{ inventory_hostname }}-cert.pem"
 ansible_eveng_ssl_key: "{{ inventory_hostname }}-key.pem"

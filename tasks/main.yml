@@ -121,6 +121,28 @@
   when: eveng_admin.stdout != "admin"
   tags: password
 
+- name: Check if API user exists
+  command: "{{ ansible_eveng_mysql_command }} -e \"select username from users where username='{{ ansible_eveng_api_username }}'\""
+  changed_when: false
+  register: eveng_api_username
+  tags: password
+
+- name: Add API user
+  command: "{{ ansible_eveng_mysql_command }} -N -e \"insert into users (username, cookie, email, name, password, session, role, html5, datestart, extauth, ram, cpu) values ('{{ ansible_eveng_api_username }}', NULL, 'root@localhost', 'API user', sha2('{{ ansible_eveng_api_password }}', 256), NULL, 'admin', -1, -1, 'internal', -1, -1)\""
+  when: eveng_api_username.stdout != ansible_eveng_api_username
+  tags: password
+
+- name: Check if API users password is already set
+  command: "{{ ansible_eveng_mysql_command }} -e \"select username from users where password=sha2('{{ ansible_eveng_api_password }}', 256)\""
+  changed_when: false
+  register: eveng_api_password
+  tags: password
+
+- name: Change API users password if needed
+  command: "{{ ansible_eveng_mysql_command }} -N -e \"update users set password=sha2('{{ ansible_eveng_api_password }}', 256) where username='{{ ansible_eveng_api_username }}'\""
+  when: eveng_api_password.stdout != ansible_eveng_api_username
+  tags: password
+
 - include_tasks: '{{ ansible_eveng_provider }}.yml'
   tags: interfaces
 

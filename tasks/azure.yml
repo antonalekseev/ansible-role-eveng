@@ -11,7 +11,7 @@
 
 - name: Install EVE-NG-specific Azure kernel
   apt:
-    name: "{{ ansible_eveng_azure_kernel_package }}" 
+    name: "{{ ansible_eveng_azure_kernel_package }}"
     state: latest  # noqa 403
     update_cache: yes
     force_apt_get: yes

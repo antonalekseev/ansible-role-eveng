@@ -154,7 +154,8 @@
     dest: '{{ ansible_eveng_config_scripts_dir }}/{{ item | basename }}'
     mode: 'u=rwx,g=rx,o=rx'
     backup: yes
-  loop: "{{ lookup('fileglob', 'files/config-scripts/config_*', wantlist=True) }}"
+  loop: "{{ lookup('fileglob', 'files/config_scripts/config_*', wantlist=True) }}"
+  tags: images
 
 - name: Create images download directory
   file:

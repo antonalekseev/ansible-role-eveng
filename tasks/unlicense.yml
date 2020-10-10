@@ -1,0 +1,20 @@
+---
+
+- name: Replace valid license with dummy one
+  copy:
+    src: /opt/unetlab/html/eve-ng.nolic
+    dest: /opt/unetlab/html/eve-ng.lic
+    remote_src: yes
+  notify: Restart EVE-NG license server
+
+- meta: flush_handlers
+
+- name: Wait for license data to propagate
+  command: /opt/unetlab/wrappers/unl_wrapper -a platform
+  register: unl_wrapper
+  retries: 10
+  delay: 15
+  until: unl_wrapper is failed
+  ignore_errors: yes
+
+- meta: end_host

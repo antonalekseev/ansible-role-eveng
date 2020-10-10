@@ -1,4 +1,6 @@
 ---
+op: ''
+
 ansible_eveng_edition: "community" # or "pro"
 # xenial - 2.0.x (community, pro)
 # bionic - 3.0.x (pro)

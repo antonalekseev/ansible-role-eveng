@@ -13,6 +13,11 @@
     name: apache2
     state: restarted
 
+- name: Restart EVE-NG license server
+  service:
+    name: licserver
+    state: restarted
+
 - name: Fix EVE-NG permissions
   command: /opt/unetlab/wrappers/unl_wrapper -a fixpermissions
 

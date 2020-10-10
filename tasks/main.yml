@@ -23,6 +23,10 @@
 - name: Gather facts
   setup:
 
+- name: Remove EVE-NG license information from the host 
+  include_tasks: 'unlicense.yml'
+  when: op == 'unlicense'
+
 - name: Update all packages
   apt:
     name: "*"

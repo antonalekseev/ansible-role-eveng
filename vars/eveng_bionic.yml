@@ -1,2 +1,2 @@
 ---
-ansible_eveng_config_scripts_dir: /opt/unetlab/config_scripts
+eveng_config_scripts_dir: /opt/unetlab/config_scripts

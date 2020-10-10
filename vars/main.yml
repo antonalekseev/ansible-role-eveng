@@ -1,5 +1,5 @@
 ---
 
-ansible_eveng_supported_os_families:
+eveng_supported_os_families:
   - Debian
-ansible_eveng_mysql_command: mysql --host={{ ansible_eveng_mysql_host }} --user={{ ansible_eveng_mysql_user }} --password={{ ansible_eveng_mysql_password }} {{ ansible_eveng_mysql_db }} --silent 
+eveng_mysql_command: mysql --host={{ eveng_mysql_host }} --user={{ eveng_mysql_user }} --password={{ eveng_mysql_password }} {{ eveng_mysql_db }} --silent 

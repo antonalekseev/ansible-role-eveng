@@ -11,7 +11,7 @@
 
 - name: Install EVE-NG-specific Azure kernel
   apt:
-    name: "{{ ansible_eveng_azure_kernel_package }}"
+    name: "{{ eveng_azure_kernel_package }}"
     state: latest  # noqa 403
     update_cache: yes
     force_apt_get: yes
@@ -22,7 +22,7 @@
   lineinfile:
     path: /etc/default/grub
     regexp: 'GRUB_DEFAULT=.*'
-    line: 'GRUB_DEFAULT="{{ ansible_eveng_grub_menu_item }}"'
+    line: 'GRUB_DEFAULT="{{ eveng_grub_menu_item }}"'
   notify: Update GRUB
   when: ansible_distribution_major_version == "16"
 

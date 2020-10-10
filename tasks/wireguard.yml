@@ -2,7 +2,7 @@
 
 - name: Download and extract Go binary package
   unarchive:
-    src: "{{ ansible_eveng_golang_bin_pkg_url }}"
+    src: "{{ eveng_golang_bin_pkg_url }}"
     dest: /usr/local
     remote_src: yes
     creates: /usr/local/go/bin/go
@@ -33,7 +33,7 @@
 
 - name: Download and extract wireguard-go source package
   unarchive:
-    src: "{{ ansible_eveng_wg_src_url }}"
+    src: "{{ eveng_wg_src_url }}"
     dest: /tmp/wireguard-go-build
     remote_src: yes
   tags: wireguard
@@ -41,15 +41,15 @@
 - name: Build wireguard-go from source
   command:
     cmd: make all
-    chdir: /tmp/wireguard-go-build/{{ ( ( ansible_eveng_wg_src_url | basename | splitext )[0] | splitext )[0] }}
-    creates: /tmp/wireguard-go-build/{{ ( ( ansible_eveng_wg_src_url | basename | splitext )[0] | splitext )[0] }}/wireguard-go
+    chdir: /tmp/wireguard-go-build/{{ ( ( eveng_wg_src_url | basename | splitext )[0] | splitext )[0] }}
+    creates: /tmp/wireguard-go-build/{{ ( ( eveng_wg_src_url | basename | splitext )[0] | splitext )[0] }}/wireguard-go
   environment:
     PATH: "{{ lookup('env', 'PATH') }}:/usr/local/go/bin"
   tags: wireguard
 
 - name: Install wireguard to /usr/sbin
   copy:
-    src: /tmp/wireguard-go-build/{{ ( ( ansible_eveng_wg_src_url | basename | splitext )[0] | splitext )[0] }}/wireguard-go
+    src: /tmp/wireguard-go-build/{{ ( ( eveng_wg_src_url | basename | splitext )[0] | splitext )[0] }}/wireguard-go
     dest: /usr/sbin/wireguard-go
     mode: preserve
     remote_src: yes
@@ -75,7 +75,7 @@
 
 - name: Download and extract wireguard-tools source package
   unarchive:
-    src: "{{ ansible_eveng_wg_tools_src_url }}"
+    src: "{{ eveng_wg_tools_src_url }}"
     dest: /tmp/wireguard-tools-build
     remote_src: yes
   tags: wireguard
@@ -83,8 +83,8 @@
 - name: Build wireguard-tools from source
   command:
     cmd: make all
-    chdir: /tmp/wireguard-tools-build/{{ ( ( ansible_eveng_wg_tools_src_url | basename | splitext )[0] | splitext )[0] }}/src
-    creates: /tmp/wireguard-tools-build/{{ ( ( ansible_eveng_wg_tools_src_url | basename | splitext )[0] | splitext )[0] }}/wg
+    chdir: /tmp/wireguard-tools-build/{{ ( ( eveng_wg_tools_src_url | basename | splitext )[0] | splitext )[0] }}/src
+    creates: /tmp/wireguard-tools-build/{{ ( ( eveng_wg_tools_src_url | basename | splitext )[0] | splitext )[0] }}/wg
   environment:
     PATH: "{{ lookup('env', 'PATH') }}:/usr/local/go/bin"
     WITH_SYSTEMDUNITS: "yes"
@@ -93,7 +93,7 @@
 - name: Install wireguard-tools
   command:
     cmd: make install
-    chdir: /tmp/wireguard-tools-build/{{ ( ( ansible_eveng_wg_tools_src_url | basename | splitext )[0] | splitext )[0] }}/src
+    chdir: /tmp/wireguard-tools-build/{{ ( ( eveng_wg_tools_src_url | basename | splitext )[0] | splitext )[0] }}/src
     creates: /usr/bin/wg
   environment:
     PATH: "{{ lookup('env', 'PATH') }}:/usr/local/go/bin"

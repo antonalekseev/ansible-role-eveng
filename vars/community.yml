@@ -1,2 +1,2 @@
 ---
-ansible_eveng_apt_repository: "deb [arch=amd64] http://www.eve-ng.net/repo xenial main"
+eveng_apt_repository: "deb [arch=amd64] http://www.eve-ng.net/repo xenial main"

@@ -1,9 +1,9 @@
 [Interface]
 PrivateKey = {{ client_key_val }} 
-ListenPort = {{ ansible_eveng_wg_client_port }}
-Address = {{ ansible_eveng_wg_client_ifaddr_v4 }}
+ListenPort = {{ eveng_wg_client_port }}
+Address = {{ eveng_wg_client_ifaddr_v4 }}
 
 [Peer]
 PublicKey = {{ server_pubkey_val }}
-AllowedIPs = {{ ansible_eveng_mgmt_netaddr_v4 }}
-Endpoint = {{ ansible_eveng_wg_server_endpoint }}
+AllowedIPs = {{ eveng_mgmt_netaddr_v4 }}
+Endpoint = {{ eveng_wg_server_endpoint }}

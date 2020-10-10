@@ -9,7 +9,7 @@
     - regexp: 'GRUB_CMDLINE_LINUX_DEFAULT=.*'
       line: 'GRUB_CMDLINE_LINUX_DEFAULT=""'
     - regexp: 'GRUB_CMDLINE_LINUX=.*'
-      line: "{{ ansible_eveng_grub_cmdline_linux }}"
+      line: "{{ eveng_grub_cmdline_linux }}"
   notify: Update GRUB
 
 - name: Rename network interfaces

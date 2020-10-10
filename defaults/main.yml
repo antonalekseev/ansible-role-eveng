@@ -1,5 +1,9 @@
 ---
 ansible_eveng_edition: "community" # or "pro"
+# xenial - 2.0.x (community, pro)
+# bionic - 3.0.x (pro)
+# see also https://www.eve-ng.net/index.php/documentation/release-notes/
+ansible_eveng_version: 'bionic'
 ansible_eveng_provider: packet
 
 ansible_eveng_apt_key_url: http://www.eve-ng.net/repo/eczema@ecze.com.gpg.key

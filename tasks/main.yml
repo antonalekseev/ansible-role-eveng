@@ -4,11 +4,18 @@
     msg: "Unsupported OS family {{ ansible_os_family }}"
   when: ansible_os_family not in ansible_eveng_supported_os_families
 
-- name: Include provider specific variables
+- fail:
+    msg: "Community edition is not available for 3.0.x releases of EVE-NG."
+  when: ansible_eveng_version == 'bionic' and ansible_eveng_edition == 'community'
+
+- name: Include provider-specific variables
   include_vars: "{{ ansible_eveng_provider }}.yml"
-  
+
 - name: Include variables specific to EVE-NG edition
   include_vars: "{{ ansible_eveng_edition }}.yml"
+
+- name: Include variables specific to EVE-NG release
+  include_vars: "eveng_{{ ansible_eveng_release }}.yml"
 
 - name: Wait for the host to be available
   wait_for_connection:
@@ -49,7 +56,7 @@
   lineinfile:
     path: /etc/hosts
     regexp: '^127\.0\.0\.1'
-    line: '127.0.0.1 {{ inventory_hostname }}' 
+    line: '127.0.0.1 {{ inventory_hostname }}'
     insertbefore: BOF
     firstmatch: yes
   tags: hostname
@@ -140,6 +147,14 @@
 
 - include_tasks: 'wireguard.yml'
   tags: wireguard
+
+- name: Install custom config-scripts
+  copy:
+    src: '{{ item }}'
+    dest: '{{ ansible_eveng_config_scripts_dir }}/{{ item | basename }}'
+    mode: 'u=rwx,g=rx,o=rx'
+    backup: yes
+  loop: "{{ lookup('fileglob', 'files/config-scripts/config_*', wantlist=True) }}"
 
 - name: Create images download directory
   file:

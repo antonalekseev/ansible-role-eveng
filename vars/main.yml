@@ -2,4 +2,4 @@
 
 eveng_supported_os_families:
   - Debian
-eveng_mysql_command: mysql --host={{ eveng_mysql_host }} --user={{ eveng_mysql_user }} --password={{ eveng_mysql_password }} {{ eveng_mysql_db }} --silent 
+eveng_mysql_command: mysql --host={{ eveng_mysql_host }} --user={{ eveng_mysql_user }} {{ eveng_mysql_db }} --silent 

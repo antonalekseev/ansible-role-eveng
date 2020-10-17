@@ -1,0 +1,14 @@
+---
+- name: Remove dockers package
+  apt:
+    name: eve-ng-dockers
+    state: absent  # noqa 403
+
+- name: Install dockers package
+  apt:
+    name: eve-ng-dockers
+    state: latest  # noqa 403
+
+- name: Wait for 1 minute
+  pause:
+    minutes: 1

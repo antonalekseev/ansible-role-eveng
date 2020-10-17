@@ -36,6 +36,29 @@
     name: eve-ng-pro
     state: latest  # noqa 403
 
+- name: Install EVE-NG dockers
+  block:
+    - name: Set the retry count
+      set_fact:
+        retry_count: "{{ 0 if retry_count is undefined else retry_count|int + 1 }}"
+
+    - name: Check docker images
+      command: /usr/bin/docker -H tcp://127.0.0.1:4243 images
+      register: check_images
+
+    - name: Fail if images are not ready
+      fail:
+        msg: 'Some images are <none>'
+      when: '"<none>" in check_images.stdout or "eve-wireshark" not in check_images.stdout'
+  rescue:
+    - fail:
+        msg: Ended after 5 retries
+      when: retry_count|int == 5
+
+    - debug:
+        msg: "Reinstalling package..."
+    - include_tasks: install_dockers.yml 
+
 - name: Place EVE-NG license file
   copy:
     dest: /opt/unetlab/html/eve-ng.lic
